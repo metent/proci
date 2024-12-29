@@ -1,19 +1,19 @@
-use axum::extract::State;
-use axum::http::Uri;
+mod services;
+
+use crate::services::tags;
 use axum::routing::get;
 use axum::Router;
 use serde::de::value::Error as DeError;
 use serde::de::value::MapDeserializer;
 use serde::Deserialize;
 use tokio::net::TcpListener;
+use url::Url;
 
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 struct Env {
-	#[serde(with = "http_serde::uri")]
-	container_registry: Uri,
-	#[serde(with = "http_serde::uri")]
-	auth_endpoint: Uri,
+	container_registry: Url,
+	auth_endpoint: Url,
 	#[serde(default, flatten)]
 	credentials: Option<String>,
 	blob_suffix: String,
@@ -35,15 +35,13 @@ impl Refs {
 async fn main() -> Result<(), Error> {
 	tracing_subscriber::fmt::init();
 
-	let app = Router::new().with_state(Refs::new()?).route("/", get(root));
+	let app = Router::new()
+		.route("/{user}/{image}", get(tags))
+		.with_state(Refs::new()?);
 
 	let listener = TcpListener::bind("0.0.0.0:3000").await?;
 	axum::serve(listener, app).await?;
 	Ok(())
-}
-
-async fn root() -> &'static str {
-	"Hello, World!"
 }
 
 #[derive(thiserror::Error, Debug)]
