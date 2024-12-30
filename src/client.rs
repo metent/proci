@@ -32,7 +32,7 @@ impl OciClient {
 
 	pub async fn tags(&self, image_path: &str) -> Result<TagList, Error> {
 		self.client
-			.get(self.registry_url.as_str().to_owned() + image_path)
+			.get(format!("{}/v2/{}/tags/list", self.registry_url, image_path))
 			.bearer_auth(&self.auth(image_path).await?)
 			.send()
 			.await?
