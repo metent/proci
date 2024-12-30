@@ -1,5 +1,7 @@
+mod client;
 mod services;
 
+use crate::client::OciClient;
 use crate::services::tags;
 use axum::routing::get;
 use axum::Router;
@@ -12,22 +14,27 @@ use url::Url;
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 struct Env {
-	container_registry: Url,
+	container_registry: String,
 	auth_endpoint: Url,
 	#[serde(default, flatten)]
-	credentials: Option<String>,
+	credentials: Option<(String, String)>,
 	blob_suffix: String,
 }
 
 #[derive(Clone)]
 struct Refs {
-	env: Env,
+	client: OciClient,
+	blob_suffix: String,
 }
 
 impl Refs {
 	fn new() -> Result<Self, Error> {
 		let env = Env::deserialize(MapDeserializer::<_, DeError>::new(std::env::vars()))?;
-		return Ok(Refs { env });
+		let client = OciClient::new(env.container_registry, env.auth_endpoint, env.credentials)?;
+		return Ok(Refs {
+			client,
+			blob_suffix: env.blob_suffix,
+		});
 	}
 }
 
@@ -47,7 +54,9 @@ async fn main() -> Result<(), Error> {
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
 	#[error("IO Error: {0}")]
-	IoError(#[from] std::io::Error),
+	Io(#[from] std::io::Error),
 	#[error("Config Error: {0}")]
-	ConfigError(#[from] DeError),
+	Config(#[from] DeError),
+	#[error("Invalid Registry URL")]
+	InvalidRegistry(#[from] url::ParseError),
 }
