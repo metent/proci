@@ -2,7 +2,8 @@ use crate::Credentials;
 use either::IntoEither;
 use oci_spec::distribution::TagList;
 use oci_spec::image::{ImageManifest, MediaType};
-use reqwest::Client;
+use reqwest::header::HeaderValue;
+use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -54,6 +55,10 @@ impl OciClient {
 				self.registry_url, image_path, tag
 			))
 			.bearer_auth(&token)
+			.header(
+				header::ACCEPT,
+				HeaderValue::from_static("application/vnd.oci.image.manifest.v1+json"),
+			)
 			.send()
 			.await?
 			.error_for_status()?
