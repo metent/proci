@@ -1,12 +1,13 @@
 use super::Refs;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use axum::response::{Html, IntoResponse, Response};
+use axum::response::{Html, IntoResponse, Redirect, Response};
 use rinja::Template;
+use std::sync::Arc;
 
 pub async fn tags(
 	Path((user, image)): Path<(String, String)>,
-	State(refs): State<Refs>,
+	State(refs): State<Arc<Refs>>,
 ) -> Result<Html<String>, Error> {
 	let image_path = user + "/" + &image;
 	let tags_response = refs.client.tags(&image_path).await?;
@@ -28,10 +29,20 @@ struct TagsTemplate<'a> {
 	blob_suffix: &'a str,
 }
 
+pub async fn blob(
+	Path((user, image, tag)): Path<(String, String, String)>,
+	State(refs): State<Arc<Refs>>,
+) -> Result<Redirect, Error> {
+	let image_path = user + "/" + &image;
+	Ok(Redirect::to(
+		&refs.client.blob_url(&image_path, &tag).await?,
+	))
+}
+
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-	#[error("Registry connection error: {0}")]
-	RegistryConnection(#[from] reqwest::Error),
+	#[error("Registry error: {0}")]
+	RegistryConnection(#[from] crate::client::Error),
 	#[error("Templating error: {0}")]
 	Templating(#[from] rinja::Error),
 }
