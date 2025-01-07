@@ -19,9 +19,16 @@ struct Env {
 	container_registry: String,
 	auth_endpoint: Url,
 	#[serde(default, flatten)]
-	credentials: Option<(String, String)>,
+	credentials: Option<Credentials>,
 	blob_suffix: String,
 	media_type: MediaType,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+struct Credentials {
+	username: String,
+	password: String,
 }
 
 struct Refs {

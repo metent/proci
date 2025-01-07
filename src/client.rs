@@ -1,3 +1,4 @@
+use crate::Credentials;
 use either::IntoEither;
 use oci_spec::distribution::TagList;
 use oci_spec::image::{ImageManifest, MediaType};
@@ -5,13 +6,12 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-#[derive(Clone)]
 pub struct OciClient {
 	client: Client,
 	registry: String,
 	registry_url: Url,
 	auth_url: Url,
-	credentials: Option<(String, String)>,
+	credentials: Option<Credentials>,
 	media_type: MediaType,
 }
 
@@ -19,7 +19,7 @@ impl OciClient {
 	pub fn new(
 		registry: String,
 		auth_url: Url,
-		credentials: Option<(String, String)>,
+		credentials: Option<Credentials>,
 		media_type: MediaType,
 	) -> Result<Self, url::ParseError> {
 		let registry_url = Url::parse(&format!("https://{registry}"))?;
@@ -86,7 +86,7 @@ impl OciClient {
 			scope: &format!("repository:{}:pull", image_path),
 		};
 		let (username, password) = match &self.credentials {
-			Some((u, p)) => (u.as_str(), Some(p)),
+			Some(Credentials { username, password }) => (username.as_str(), Some(password)),
 			None => ("", None),
 		};
 
