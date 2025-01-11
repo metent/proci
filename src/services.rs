@@ -43,7 +43,7 @@ pub async fn blob(
 	let blob_url = refs.client.blob_url(&image_path, &tag).await?;
 
 	let disposition = format!(r#"attachment; filename="{suffixed_tag}""#);
-	let headers = [(header::CONTENT_DISPOSITION, disposition)];
+	let headers = [("response-content-disposition", disposition)];
 
 	Ok((headers, Redirect::to(&blob_url)))
 }
