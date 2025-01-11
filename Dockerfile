@@ -1,4 +1,4 @@
-FROM rust:1.84.0-alpine3.21 as builder
+FROM rust:1.84.0-alpine3.21 AS builder
 
 RUN apk add --no-cache musl-dev
 COPY ./Cargo.toml ./Cargo.lock ./
@@ -9,9 +9,9 @@ RUN mkdir ./src \
 
 COPY ./src ./src
 COPY ./templates ./templates
-RUN cargo build --release --frozen
+RUN cargo build --release --locked
 
-FROM alpine:3.21 as runner
+FROM alpine:3.21 AS runner
 
 WORKDIR /opt/app
 COPY --from=builder /target/release/proci /opt/app/
