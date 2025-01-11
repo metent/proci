@@ -9,7 +9,7 @@ RUN mkdir ./src \
 
 COPY ./src ./src
 COPY ./templates ./templates
-RUN cargo build --release --locked
+RUN touch ./src/main.rs && cargo build --release --frozen
 
 FROM alpine:3.21 AS runner
 
